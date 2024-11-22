@@ -12,8 +12,14 @@
 
 extern sbuf_t shared[BUFF_NUMBER];
 
-void write_output(sbuf_s item) {
-  FILE *output_file = fopen(OUTPUT_FILENAME, "a");
+void write_output(sbuf_s item, int first_write) {
+  FILE *output_file;
+
+  if (first_write) {
+    output_file = fopen(OUTPUT_FILENAME, "w");
+  } else {
+    output_file = fopen(OUTPUT_FILENAME, "a");
+  }
 
   if (output_file == NULL) {
     perror("Error opening output file");
@@ -63,10 +69,12 @@ void write_output(sbuf_s item) {
 void *Consumer(void *arg) {
   sbuf_s item;
   int i, index;
+  static int first_write = 1;
 
   index = *((int *) arg);
 
-  for (i=0; i < NITERS; i++) { /* Prepare to read item from buf */
+  while (1) {
+    /* Prepare to read item from buf */
     /* If there are no filled slots, wait */
     sem_wait(shared[3].full);
     /* If another thread uses the buffer, wait */
@@ -77,9 +85,15 @@ void *Consumer(void *arg) {
 
     printf("[C_%d] Consuming %s...\n", index, item.name); fflush(stdout);
 
-    /* Write output to file */
-    write_output(item);
+    if (item.kill) {
+      printf("[C_%d] Received kill message\n", index); fflush(stdout);
+      return NULL;
+    }
 
+    /* Write output to file */
+    write_output(item, first_write);
+
+    first_write = 0;
     /* Release the buffer */
     sem_post(shared[3].mutex);
     /* Increment the number of empty slots */

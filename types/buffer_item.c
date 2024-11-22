@@ -7,4 +7,5 @@ typedef struct sbuf_s {
   double c[MATRIX_SIZE][MATRIX_SIZE];
   double v[MATRIX_SIZE];
   double e;
+  int kill;
 } sbuf_s;

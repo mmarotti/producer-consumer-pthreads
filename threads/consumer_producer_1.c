@@ -27,13 +27,35 @@ void multiply_matrices(
   }
 }
 
+void kill_threads_NCP2() {
+  for (int i = 0; i < NCP2; i++) {
+    sbuf_s kill_item;
+    kill_item.kill = 1;
+
+    /* Prepare to write item to buf */
+    /* If there are no empty slots, wait */
+    sem_wait(shared[1].empty);
+    /* If another thread uses the buffer, wait */
+    sem_wait(shared[1].mutex);
+
+    shared[1].buf[shared[1].in] = kill_item;
+    shared[1].in = (shared[1].in + 1) % BUFF_SIZE;
+
+    /* Increment the number of full slots */
+    sem_post(shared[1].full);
+    /* Release the buffer */
+    sem_post(shared[1].mutex);
+  }
+}
+
 void *ConsumerProducer1(void *arg) {
   sbuf_s item;
   int i, index;
 
   index = *((int *) arg);
 
-  for (i=0; i < NITERS; i++) { /* Prepare to read item from buf */
+  while (1) {
+    /* Prepare to read item from buf */
     /* If there are no filled slots, wait */
     sem_wait(shared[0].full);
     /* If another thread uses the buffer, wait */
@@ -48,6 +70,13 @@ void *ConsumerProducer1(void *arg) {
     sem_post(shared[0].empty);
     /* Release the buffer */
     sem_post(shared[0].mutex);
+
+    /* Generating kill messages for NCP2 threads */
+    if (item.kill) {
+      kill_threads_NCP2();
+      printf("[CP1_%d] Received kill message\n", index); fflush(stdout);
+      return NULL;
+    }
 
     /* Multiply matrices */
     multiply_matrices(item.a, item.b, item.c);

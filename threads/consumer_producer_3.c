@@ -22,13 +22,35 @@ void sum_vector(
   }
 }
 
+void kill_threads_NC() {
+  for (int i = 0; i < NC; i++) {
+    sbuf_s kill_item;
+    kill_item.kill = 1;
+
+    /* Prepare to write item to buf */
+    /* If there are no empty slots, wait */
+    sem_wait(shared[3].empty);
+    /* If another thread uses the buffer, wait */
+    sem_wait(shared[3].mutex);
+
+    shared[3].buf[shared[3].in] = kill_item;
+    shared[3].in = (shared[3].in + 1) % BUFF_SIZE;
+
+    /* Increment the number of full slots */
+    sem_post(shared[3].full);
+    /* Release the buffer */
+    sem_post(shared[3].mutex);
+  }
+}
+
 void *ConsumerProducer3(void *arg) {
   sbuf_s item;
   int i, index;
 
   index = *((int *) arg);
 
-  for (i=0; i < NITERS; i++) { /* Prepare to read item from buf */
+  while (1) {
+    /* Prepare to read item from buf */
     /* If there are no filled slots, wait */
     sem_wait(shared[2].full);
     /* If another thread uses the buffer, wait */
@@ -43,6 +65,13 @@ void *ConsumerProducer3(void *arg) {
     sem_post(shared[2].empty);
     /* Release the buffer */
     sem_post(shared[2].mutex);
+
+    /* Generating kill messages for NCP3 threads */
+    if (item.kill) {
+      printf("[CP3_%d] Received kill message\n", index); fflush(stdout);
+      kill_threads_NC();
+      return NULL;;
+    }
 
     /* Sum all elements of vector v into e */
     sum_vector(item.v, &item.e);

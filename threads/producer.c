@@ -23,6 +23,27 @@ void read_matrix(
   }
 }
 
+void kill_threads_NCP1() {
+  for (int i = 0; i < NCP1; i++) {
+    sbuf_s kill_item;
+    kill_item.kill = 1;
+
+    /* Prepare to write item to buf */
+    /* If there are no empty slots, wait */
+    sem_wait(shared[0].empty);
+    /* If another thread uses the buffer, wait */
+    sem_wait(shared[0].mutex);
+
+    shared[0].buf[shared[0].in] = kill_item;
+    shared[0].in = (shared[0].in + 1) % BUFF_SIZE;
+
+    /* Increment the number of full slots */
+    sem_post(shared[0].full);
+    /* Release the buffer */
+    sem_post(shared[0].mutex);
+  }
+}
+
 void *Producer(void *arg) {
   sbuf_s item;
   int i, index;
@@ -36,7 +57,9 @@ void *Producer(void *arg) {
     return NULL;
   }
   
-  for (i=0; i < NITERS; i++) {
+  char filename[MAX_FILENAME_LENGTH];
+
+  while (fgets(filename, MAX_FILENAME_LENGTH, list_file) != NULL) {
     /* Prepare to write item to buf */
     /* If there are no empty slots, wait */
     sem_wait(shared[0].empty);
@@ -46,9 +69,6 @@ void *Producer(void *arg) {
     double matrix1[MATRIX_SIZE][MATRIX_SIZE];
     double matrix2[MATRIX_SIZE][MATRIX_SIZE];
 
-    char filename[MAX_FILENAME_LENGTH];
-    fgets(filename, MAX_FILENAME_LENGTH, list_file);
-  
     /* Remove newline character from filename */
     filename[strcspn(filename, "\n")] = '\0';
 
@@ -71,6 +91,7 @@ void *Producer(void *arg) {
     memset(item.c, 0, sizeof(item.c));
     memset(item.v, 0, sizeof(item.v));
     item.e = 0;
+    item.kill = 0;
 
     printf("[P_%d] Producing %s...\n", index, item.name); fflush(stdout);
 
@@ -82,6 +103,9 @@ void *Producer(void *arg) {
     /* Increment the number of full slots */
     sem_post(shared[0].full);
   }
+
+  /* Generating kill messages for NCP1 threads */
+  kill_threads_NCP1();
 
   fclose(list_file);
 
