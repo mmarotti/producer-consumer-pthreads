@@ -27,7 +27,7 @@ void *Consumer(void *arg) {
     item = shared[1].buf[shared[1].out];
     shared[1].out = (shared[1].out + 1) % BUFF_SIZE;
 
-    printf("[C_%d] Consuming %f ...\n", index, item.e); fflush(stdout);
+    printf("[C_%d] Consuming %s...\n", index, item.name); fflush(stdout);
 
     /* Release the buffer */
     sem_post(shared[1].mutex);

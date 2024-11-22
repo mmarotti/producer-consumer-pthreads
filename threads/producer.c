@@ -72,10 +72,10 @@ void *Producer(void *arg) {
     memset(item.v, 0, sizeof(item.v));
     item.e = 0;
 
+    printf("[P_%d] Producing %s...\n", index, item.name); fflush(stdout);
+
     shared[0].buf[shared[0].in] = item;
     shared[0].in = (shared[0].in + 1) % BUFF_SIZE;
-
-    printf("[P_%d] Producing %f ...\n", index, item.e); fflush(stdout);
 
     /* Release the buffer */
     sem_post(shared[0].mutex);

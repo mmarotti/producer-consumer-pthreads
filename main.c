@@ -12,7 +12,7 @@
 #endif
 
 #include "threads/producer.c"
-#include "threads/consumer_producer.c"
+#include "threads/consumer_producer_1.c"
 #include "threads/consumer.c"
 
 void create_semaphores() {
@@ -62,8 +62,8 @@ int main() {
 
   for (index = 0; index < NCP; index++) {
     sCP[index] = index;
-    /* Create a new consumer producer */
-    pthread_create(&idCP[index], NULL, ConsumerProducer, &sCP[index]);
+    /* Create a new consumer producer 1 */
+    pthread_create(&idCP[index], NULL, ConsumerProducer1, &sCP[index]);
   }
 
   for (index = 0; index < NC; index++) {
