@@ -13,6 +13,7 @@
 
 #include "threads/producer.c"
 #include "threads/consumer_producer_1.c"
+#include "threads/consumer_producer_2.c"
 #include "threads/consumer.c"
 
 void create_semaphores() {
@@ -49,8 +50,8 @@ void cleanup_semaphores() {
 
 int main() {
   int index;
-  int sP[NP], sC[NC], sCP[NCP];
-  pthread_t idP[NP], idC[NC], idCP[NCP];
+  int sP[NP], sCP1[NCP1], sCP2[NCP2], sC[NC];
+  pthread_t idP[NP], idCP1[NCP1], idCP2[NCP2], idC[NC];
 
   create_semaphores();
 
@@ -60,10 +61,16 @@ int main() {
     pthread_create(&idP[index], NULL, Producer, &sP[index]);
   }
 
-  for (index = 0; index < NCP; index++) {
-    sCP[index] = index;
+  for (index = 0; index < NCP1; index++) {
+    sCP1[index] = index;
     /* Create a new consumer producer 1 */
-    pthread_create(&idCP[index], NULL, ConsumerProducer1, &sCP[index]);
+    pthread_create(&idCP1[index], NULL, ConsumerProducer1, &sCP1[index]);
+  }
+
+  for (index = 0; index < NCP2; index++) {
+    sCP1[index] = index;
+    /* Create a new consumer producer 1 */
+    pthread_create(&idCP2[index], NULL, ConsumerProducer2, &sCP2[index]);
   }
 
   for (index = 0; index < NC; index++) {
@@ -76,8 +83,11 @@ int main() {
   for (index = 0; index < NP; index++) {
     pthread_join(idP[index], NULL);
   }
-  for (index = 0; index < NCP; index++) {
-    pthread_join(idCP[index], NULL);
+  for (index = 0; index < NCP1; index++) {
+    pthread_join(idCP1[index], NULL);
+  }
+  for (index = 0; index < NCP2; index++) {
+    pthread_join(idCP2[index], NULL);
   }
   for (index = 0; index < NC; index++) {
     pthread_join(idC[index], NULL);
