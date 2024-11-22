@@ -29,7 +29,7 @@ void *Producer(void *arg) {
 
   index = *((int *)arg);
 
-  FILE *list_file = fopen(FILENAME, "r");
+  FILE *list_file = fopen(INPUT_FILENAME, "r");
 
   if (list_file == NULL) {
     perror("Error opening input list file");
