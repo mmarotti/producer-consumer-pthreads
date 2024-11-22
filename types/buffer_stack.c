@@ -3,7 +3,7 @@
 #include "../definitions.h"
 
 typedef struct sbuf_t {
-  sbuf_s buf[BUFF_SIZE];   /* shared var */
+  sbuf_s *buf[BUFF_SIZE];   /* shared var */
   int in;                  /* buf[in%BUFF_SIZE] is the first empty slot */
   int out;                 /* buf[out%BUFF_SIZE] is the first full slot */
   sem_t *full;              /* keep track of the number of full spots */

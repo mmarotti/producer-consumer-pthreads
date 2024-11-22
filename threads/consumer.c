@@ -12,9 +12,9 @@
 
 extern sbuf_t shared[BUFF_NUMBER];
 
-void write_output(sbuf_s item, int first_write) {
+void write_output(sbuf_s* item, int first_write) {
   FILE *output_file;
-
+  
   if (first_write) {
     output_file = fopen(OUTPUT_FILENAME, "w");
   } else {
@@ -27,12 +27,12 @@ void write_output(sbuf_s item, int first_write) {
   }
 
   fprintf(output_file, "=========================================================================================\n");
-  fprintf(output_file, "Entrada: %s;\n", item.name);
+  fprintf(output_file, "Entrada: %s;\n", item->name);
   fprintf(output_file, "——————————–——————————–——————————–——————————–——————————–——————————–——————————–——————————––\n");
   fprintf(output_file, "A\n");
   for (int i = 0; i < MATRIX_SIZE; i++) {
     for (int j = 0; j < MATRIX_SIZE; j++) {
-      fprintf(output_file, "%.6f ", item.a[i][j]);
+      fprintf(output_file, "%.6f ", item->a[i][j]);
     }
     fprintf(output_file, "\n");
   }
@@ -40,7 +40,7 @@ void write_output(sbuf_s item, int first_write) {
   fprintf(output_file, "B\n");
   for (int i = 0; i < MATRIX_SIZE; i++) {
     for (int j = 0; j < MATRIX_SIZE; j++) {
-      fprintf(output_file, "%.6f ", item.b[i][j]);
+      fprintf(output_file, "%.6f ", item->b[i][j]);
     }
     fprintf(output_file, "\n");
   }
@@ -48,26 +48,26 @@ void write_output(sbuf_s item, int first_write) {
   fprintf(output_file, "C\n");
   for (int i = 0; i < MATRIX_SIZE; i++) {
     for (int j = 0; j < MATRIX_SIZE; j++) {
-      fprintf(output_file, "%.6f ", item.c[i][j]);
+      fprintf(output_file, "%.6f ", item->c[i][j]);
     }
     fprintf(output_file, "\n");
   }
   fprintf(output_file, "——————————–——————————–——————————–——————————–——————————–——————————–——————————–——————————––\n");
   fprintf(output_file, "V\n");
   for (int i = 0; i < MATRIX_SIZE; i++) {
-    fprintf(output_file, "%.6f ", item.v[i]);
+    fprintf(output_file, "%.6f ", item->v[i]);
   }
   fprintf(output_file, "\n");
   fprintf(output_file, "——————————–——————————–——————————–——————————–——————————–——————————–——————————–——————————––\n");
   fprintf(output_file, "E\n");
-  fprintf(output_file, "%.6f\n", item.e);
+  fprintf(output_file, "%.6f\n", item->e);
   fprintf(output_file, "=========================================================================================\n\n");
 
   fclose(output_file);
 }
 
 void *Consumer(void *arg) {
-  sbuf_s item;
+  sbuf_s *item;
   int i, index;
   static int first_write = 1;
 
@@ -83,9 +83,9 @@ void *Consumer(void *arg) {
     item = shared[3].buf[shared[3].out];
     shared[3].out = (shared[3].out + 1) % BUFF_SIZE;
 
-    printf("[C_%d] Consuming %s...\n", index, item.name); fflush(stdout);
+    printf("[C_%d] Consuming %s...\n", index, item->name); fflush(stdout);
 
-    if (item.kill) {
+    if (item->kill) {
       printf("[C_%d] Received kill message\n", index); fflush(stdout);
       return NULL;
     }

@@ -3,6 +3,8 @@
     "definitions.h": "c",
     "__locale": "c",
     "ios": "c",
-    "typeinfo": "c"
+    "typeinfo": "c",
+    "queue": "c",
+    "stack": "c"
   }
 }

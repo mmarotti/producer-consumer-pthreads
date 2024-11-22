@@ -29,8 +29,8 @@ void multiply_matrices(
 
 void kill_threads_NCP2() {
   for (int i = 0; i < NCP2; i++) {
-    sbuf_s kill_item;
-    kill_item.kill = 1;
+    sbuf_s *kill_item = (sbuf_s *) malloc(sizeof(sbuf_s));
+    kill_item->kill = 1;
 
     /* Prepare to write item to buf */
     /* If there are no empty slots, wait */
@@ -49,7 +49,7 @@ void kill_threads_NCP2() {
 }
 
 void *ConsumerProducer1(void *arg) {
-  sbuf_s item;
+  sbuf_s *item;
   int i, index;
 
   index = *((int *) arg);
@@ -64,7 +64,7 @@ void *ConsumerProducer1(void *arg) {
     item = shared[0].buf[shared[0].out];
     shared[0].out = (shared[0].out + 1) % BUFF_SIZE;
 
-    printf("[CP1_%d] Consuming %s...\n", index, item.name); fflush(stdout);
+    printf("[CP1_%d] Consuming %s...\n", index, item->name); fflush(stdout);
 
     /* Increment the number of empty slots */
     sem_post(shared[0].empty);
@@ -72,14 +72,14 @@ void *ConsumerProducer1(void *arg) {
     sem_post(shared[0].mutex);
 
     /* Generating kill messages for NCP2 threads */
-    if (item.kill) {
+    if (item->kill) {
       kill_threads_NCP2();
       printf("[CP1_%d] Received kill message\n", index); fflush(stdout);
       return NULL;
     }
 
     /* Multiply matrices */
-    multiply_matrices(item.a, item.b, item.c);
+    multiply_matrices(item->a, item->b, item->c);
 
     /* Prepare to write item to buf */
     /* If there are no empty slots, wait */
@@ -87,7 +87,7 @@ void *ConsumerProducer1(void *arg) {
     /* If another thread uses the buffer, wait */
     sem_wait(shared[1].mutex);
 
-    printf("[CP1_%d] Producing %s...\n", index, item.name); fflush(stdout);
+    printf("[CP1_%d] Producing %s...\n", index, item->name); fflush(stdout);
 
     shared[1].buf[shared[1].in] = item;
     shared[1].in = (shared[1].in+1) % BUFF_SIZE;

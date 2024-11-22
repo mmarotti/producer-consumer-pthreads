@@ -25,8 +25,8 @@ void read_matrix(
 
 void kill_threads_NCP1() {
   for (int i = 0; i < NCP1; i++) {
-    sbuf_s kill_item;
-    kill_item.kill = 1;
+    sbuf_s *kill_item = (sbuf_s *) malloc(sizeof(sbuf_s));
+    kill_item->kill = 1;
 
     /* Prepare to write item to buf */
     /* If there are no empty slots, wait */
@@ -45,7 +45,7 @@ void kill_threads_NCP1() {
 }
 
 void *Producer(void *arg) {
-  sbuf_s item;
+  sbuf_s *item;
   int i, index;
 
   index = *((int *)arg);
@@ -85,15 +85,17 @@ void *Producer(void *arg) {
 
     fclose(input_file);
 
-    strcpy(item.name, filename);
-    memcpy(item.a, matrix1, sizeof(matrix1));
-    memcpy(item.b, matrix2, sizeof(matrix2));
-    memset(item.c, 0, sizeof(item.c));
-    memset(item.v, 0, sizeof(item.v));
-    item.e = 0;
-    item.kill = 0;
+    item = (sbuf_s *) malloc(sizeof(sbuf_s));
+    
+    strcpy(item->name, filename);
+    memcpy(item->a, matrix1, sizeof(matrix1));
+    memcpy(item->b, matrix2, sizeof(matrix2));
+    memset(item->c, 0, sizeof(item->c));
+    memset(item->v, 0, sizeof(item->v));
+    item->e = 0;
+    item->kill = 0;
 
-    printf("[P_%d] Producing %s...\n", index, item.name); fflush(stdout);
+    printf("[P_%d] Producing %s...\n", index, item->name); fflush(stdout);
 
     shared[0].buf[shared[0].in] = item;
     shared[0].in = (shared[0].in + 1) % BUFF_SIZE;

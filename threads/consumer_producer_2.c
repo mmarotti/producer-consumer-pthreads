@@ -26,8 +26,8 @@ void calculate_vector(
 
 void kill_threads_NCP3() {
   for (int i = 0; i < NCP3; i++) {
-    sbuf_s kill_item;
-    kill_item.kill = 1;
+    sbuf_s *kill_item = (sbuf_s *) malloc(sizeof(sbuf_s));
+    kill_item->kill = 1;
 
     /* Prepare to write item to buf */
     /* If there are no empty slots, wait */
@@ -46,7 +46,7 @@ void kill_threads_NCP3() {
 }
 
 void *ConsumerProducer2(void *arg) {
-  sbuf_s item;
+  sbuf_s *item;
   int i, index;
 
   index = *((int *) arg);
@@ -61,7 +61,7 @@ void *ConsumerProducer2(void *arg) {
     item = shared[1].buf[shared[1].out];
     shared[1].out = (shared[1].out + 1) % BUFF_SIZE;
 
-    printf("[CP2_%d] Consuming %s...\n", index, item.name); fflush(stdout);
+    printf("[CP2_%d] Consuming %s...\n", index, item->name); fflush(stdout);
 
     /* Increment the number of empty slots */
     sem_post(shared[1].empty);
@@ -69,14 +69,14 @@ void *ConsumerProducer2(void *arg) {
     sem_post(shared[1].mutex);
 
     /* Generating kill messages for NCP3 threads */
-    if (item.kill) {
+    if (item->kill) {
       printf("[CP2_%d] Received kill message\n", index); fflush(stdout);
       kill_threads_NCP3();
       return NULL;;
     }
 
     /* Calculate vector */
-    calculate_vector(item.a, item.v);
+    calculate_vector(item->a, item->v);
 
     /* Prepare to write item to buf */
     /* If there are no empty slots, wait */
@@ -84,7 +84,7 @@ void *ConsumerProducer2(void *arg) {
     /* If another thread uses the buffer, wait */
     sem_wait(shared[2].mutex);
 
-    printf("[CP2_%d] Producing %s...\n", index, item.name); fflush(stdout);
+    printf("[CP2_%d] Producing %s...\n", index, item->name); fflush(stdout);
 
     shared[2].buf[shared[2].in] = item;
     shared[2].in = (shared[2].in+1) % BUFF_SIZE;
