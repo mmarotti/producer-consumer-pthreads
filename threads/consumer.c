@@ -20,19 +20,19 @@ void *Consumer(void *arg) {
 
   for (i=0; i < NITERS; i++) { /* Prepare to read item from buf */
     /* If there are no filled slots, wait */
-    sem_wait(shared[2].full);
+    sem_wait(shared[3].full);
     /* If another thread uses the buffer, wait */
-    sem_wait(shared[2].mutex); 
+    sem_wait(shared[3].mutex); 
 
-    item = shared[2].buf[shared[2].out];
-    shared[2].out = (shared[2].out + 1) % BUFF_SIZE;
+    item = shared[3].buf[shared[3].out];
+    shared[3].out = (shared[3].out + 1) % BUFF_SIZE;
 
     printf("[C_%d] Consuming %s...\n", index, item.name); fflush(stdout);
 
     /* Release the buffer */
-    sem_post(shared[2].mutex);
+    sem_post(shared[3].mutex);
     /* Increment the number of empty slots */
-    sem_post(shared[2].empty);
+    sem_post(shared[3].empty);
   }
 
   return NULL;
