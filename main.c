@@ -15,35 +15,75 @@
 #include "threads/consumer_producer.c"
 #include "threads/consumer.c"
 
+void create_semaphores() {
+  char sem_name[32];
+  for (int index = 0; index < BUFF_NUMBER; index++) {
+    char sem_name[32];
+    
+    /* MacOS does not support unnamed semaphores, so we are using named ones */
+    snprintf(sem_name, sizeof(sem_name), "/sem_full_%d",index);
+    shared[index].full = sem_open(sem_name, O_CREAT, 0644, 0);
+    snprintf(sem_name, sizeof(sem_name), "/sem_empty_%d", index);
+    shared[index].empty = sem_open(sem_name, O_CREAT, 0644, BUFF_SIZE);
+    snprintf(sem_name, sizeof(sem_name), "/sem_mutex_%d", index);
+    shared[index].mutex = sem_open(sem_name, O_CREAT, 0644, 1);
+  }
+}
+
+void cleanup_semaphores() {
+  char sem_name[32];
+  for (int index = 0; index < BUFF_NUMBER; index++) {
+    snprintf(sem_name, sizeof(sem_name), "/sem_full_%d", index);
+    sem_close(shared[index].full);
+    sem_unlink(sem_name);
+
+    snprintf(sem_name, sizeof(sem_name), "/sem_empty_%d", index);
+    sem_close(shared[index].empty);
+    sem_unlink(sem_name);
+
+    snprintf(sem_name, sizeof(sem_name), "/sem_mutex_%d", index);
+    sem_close(shared[index].mutex);
+    sem_unlink(sem_name);
+  }
+}
+
 int main() {
-  pthread_t idP, idC, idCP;
   int index;
   int sP[NP], sC[NC], sCP[NCP];
+  pthread_t idP[NP], idC[NC], idCP[NCP];
 
-  for (index=0; index < 2; index++) {
-    sem_init(&shared[index].full, 0, 0);
-    sem_init(&shared[index].empty, 0, BUFF_SIZE);
-    sem_init(&shared[index].mutex, 0, 1);
-  }
+  create_semaphores();
 
   for (index = 0; index < NP; index++) {
-    sP[index]=index;
+    sP[index] = index;
     /* Create a new producer */
-    pthread_create(&idP, NULL, Producer, &sP[index]);
+    pthread_create(&idP[index], NULL, Producer, &sP[index]);
   }
 
   for (index = 0; index < NCP; index++) {
-    sCP[index]=index;
+    sCP[index] = index;
     /* Create a new consumer producer */
-    pthread_create(&idCP, NULL, ConsumerProducer, &sCP[index]);
+    pthread_create(&idCP[index], NULL, ConsumerProducer, &sCP[index]);
   }
 
   for (index = 0; index < NC; index++) {
-    sC[index]=index;
+    sC[index] = index;
     /* Create a new consumer */
-    pthread_create(&idC, NULL, Consumer, &sC[index]);
+    pthread_create(&idC[index], NULL, Consumer, &sC[index]);
   }
 
-  pthread_exit(NULL);
-}
+  /* Wait for all threads to complete */
+  for (index = 0; index < NP; index++) {
+    pthread_join(idP[index], NULL);
+  }
+  for (index = 0; index < NCP; index++) {
+    pthread_join(idCP[index], NULL);
+  }
+  for (index = 0; index < NC; index++) {
+    pthread_join(idC[index], NULL);
+  }
 
+  cleanup_semaphores();
+
+  return EXIT_SUCCESS;
+}
