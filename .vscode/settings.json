@@ -5,6 +5,9 @@
     "ios": "c",
     "typeinfo": "c",
     "queue": "c",
-    "stack": "c"
+    "stack": "c",
+    "stdlib.h": "c",
+    "stdio.h": "c",
+    "omp.h": "c"
   }
 }

@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <semaphore.h>
@@ -16,6 +17,7 @@ void calculate_vector(
   double matrix[MATRIX_SIZE][MATRIX_SIZE],
   double vector[MATRIX_SIZE]
 ) {
+  #pragma omp parallel for collapse(2)
   for (int j = 0; j < MATRIX_SIZE; j++) {
     vector[j] = 0;
     for (int i = 0; i < MATRIX_SIZE; i++) {
